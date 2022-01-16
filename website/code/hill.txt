@@ -1,0 +1,93 @@
+import numpy as np   ### brauchen wir für multiplikation usw
+from egcd import egcd  # pip install egcd ####brauchen wir für die berechnung
+
+#alphabet = "abcdefghijklmnopqrstuvwxyz"  # ganz normales alphabet
+alphabet = "abcdefghijklmnopqrstuvwxyz "  # alphabet + leerzeichen
+Buchstabe_zur_Zahl = dict(zip(alphabet, range(len(alphabet))))    ### wandelt die Buchstaben in zahlen um (mod26)
+Zahl_zu_Buchstabe = dict(zip(range(len(alphabet)), alphabet))   ### genau einmal anders rum für zahlen in buchstaben
+
+
+def matrix_mod_inv(matrix, modulus):
+    """
+    Wir finden den Matrixmodul invers durch
+    Schritt 1) Determinante finden
+    Schritt 2) wir suchen den Determinantenwert in einem bestimmten Modul (normalerweise die Länge des Alphabets)
+    Schritt 3) danach nehmen wir det_inv mal die det*invertierte Matrix  in Mod 26
+    """
+ 
+    det = int(np.round(np.linalg.det(matrix)))  # Schritt 1)   ##muss ein integer sein
+    det_inv = egcd(det, modulus)[1] % modulus  # Schritt 2)   
+    matrix_modulus_inv = (
+        det_inv * np.round(det * np.linalg.inv(matrix)).astype(int) % modulus)  # Schritt 3)
+
+    return matrix_modulus_inv
+
+
+def verschlüsseln(Nachricht, K):    # verschlüsselung beginnt hier
+    verschlüsselt = ""
+    nachricht_in_zahlen = []     # nachricht in nummern für die verschlüsselung in der Matrix ### hier werden sie gespeichert
+
+    for buchstabe in Nachricht:
+        nachricht_in_zahlen.append(Buchstabe_zur_Zahl[buchstabe])   # zur liste hinzufügen
+
+    aufteilen_P = [    # teilen die größe in die Matrix vom key
+        nachricht_in_zahlen[i : i + int(K.shape[0])]    #form
+        for i in range(0, len(nachricht_in_zahlen), int(K.shape[0]))    
+    ]
+
+    for P in aufteilen_P:   # durchläuft jede Nachricht und verschlüsselt sie mit K*N
+        P = np.transpose(np.asarray(P))[:, np.newaxis]  # wir wollen es als array haben # wir brauchen es außerdem als column vector # damit es jetzt eine Zeile ist
+
+        while P.shape[0] != K.shape[0]: # Matrix darf nict kleiner als 1x1 sein deshalb wenn es eintritt muss z.B. ein x hinzugefügt werden
+            P = np.append(P, Buchstabe_zur_Zahl[" "])[:, np.newaxis]  # prüfen ob das so richtig ist wie es soll in der mathematik
+
+        zahlen = np.dot(K, P) % len(alphabet) # Matrix multiplikation
+        n = zahlen.shape[0]  # Länge der verschlüsselten Nachricht (in Zahlen)
+
+        # Map (ruft) den verschlüsselten text ab
+        for idx in range(n): # wir wollen durch jede zahl gehen die sich aus dem resultierenden Vektor gehen
+            nummer = int(zahlen[idx, 0])  
+            verschlüsselt += Zahl_zu_Buchstabe[nummer]  # hinzufügen zu verschlüsselt
+
+    return verschlüsselt
+
+
+def entschlüsseln(chiffre, Kinv):  # entschlüsselung beginnt hier
+    entschlüsselt = ""
+    chiffre_in_zahlen = []
+
+    for buchstabe in chiffre:
+        chiffre_in_zahlen.append(Buchstabe_zur_Zahl[buchstabe]) #verschlüsselten text in zahlen umwandeln
+
+    aufteilen_C = [  # hier wieder aufteilen
+        chiffre_in_zahlen[i : i + int(Kinv.shape[0])] 
+        for i in range(0, len(chiffre_in_zahlen), int(Kinv.shape[0]))
+    ]
+
+    for C in aufteilen_C:
+        C = np.transpose(np.asarray(C))[:, np.newaxis]  #wieder angleichen
+        zahlen = np.dot(Kinv, C) % len(alphabet)
+        n = zahlen.shape[0]
+
+        for idx in range(n):
+            nummer = int(zahlen[idx, 0])
+            entschlüsselt += Zahl_zu_Buchstabe[nummer]
+
+    return entschlüsselt
+
+
+def main():
+    
+    Nachricht = "hallo hallo haahahalooo"
+
+    #K = np.matrix([[3, 3], [2, 5]]) # Matrix größe
+    #K = np.matrix([[6, 24, 1], [13,16,10], [20,17,15]]) # alphabet = 26
+    K = np.matrix([[3,10,20],[20,19,17], [23,78,17]]) # alphabet = 27 # lehrzeichen z.B.
+    Kinv = matrix_mod_inv(K, len(alphabet))
+
+    verschlüsselt_Nachricht = verschlüsseln(Nachricht, K)  #besteht aus
+    entschlüsselt_Nachricht = entschlüsseln(verschlüsselt_Nachricht, Kinv) #besteht aus
+
+    print("Original Nachricht: " + Nachricht)
+    print("verschlüsselt Nachricht: " + verschlüsselt_Nachricht)
+    print("entschlüsselt Nachricht: " + entschlüsselt_Nachricht)
