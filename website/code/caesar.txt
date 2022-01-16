@@ -1,0 +1,4 @@
+def caesar(klartext, rot):
+        clear = klartext.lower().replace(' ', '') # Leerzeichen entfernen
+        return "".join([chr((ord(c) + rot-97) % 26 + 97) for c in clear]) # Index des Buchstaben + ROT modulo 26 (Alphabet)
+        # -/+ 97 macht, dass "a" nicht der 97. Buchstabe, sodern der 0. ist. (Unicode)

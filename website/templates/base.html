@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="de">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Informatik Projekt: Verschlüsselungen</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/github.min.css" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
+        <link rel="stylesheet" href="/static/style.css" />
+    </head>
+    <body class="overflow-y-scroll">
+        <div class="max-w-7xl p-8 sm:border space-y-4 rounded-lg sm:shadow-sm mx-auto w-full sm:mt-[5vh] overflow-x-auto">
+            <h1 class="text-3xl font-medium">Informatik Projekt: Verschlüsselungen</h1>
+            <div class="flex items-center">{% for k,v in pages.items() %} <a href="/{{k}}/" class="px-4 py-3 border-b-4 {% if k == this %} border-blue-600 {% endif %}">{{v.name}}</a>{% endfor %}</div>
+            <p class="text-neutral-600">von {{by}}</p>
+            <div class="flex flex-col space-y-4">
+                <div class="flex flex-col space-y-4">{% for inp in fields.inputs %} {{inp|safe}} {% endfor %}</div>
+                <div class="flex flex-row w-full items-stretch gap-x-4">
+                    <button class="w-full text-white bg-blue-600 rounded-md px-8 py-2 hover:bg-blue-700 transition submit" id="encrypt">Verschlüsseln</button>
+                    {% if decrypt %}
+
+                    <button class="w-full text-white bg-blue-600 rounded-md px-8 py-2 hover:bg-blue-700 transition submit" id="decrypt">Entschlüsseln</button>
+                    {% endif %}
+                </div>
+                {% for out in fields.outputs %} {{out|safe}} {% endfor %}
+            </div>
+            <h2 class="text-xl">Code</h2>
+            <div class="w-full rounded-md p-4 bg-neutral-200 overflow-x-scroll">
+                <pre id="code" class="bg-neutral-200">{{code|safe}}</pre>
+            </div>
+        </div>
+        <div class="w-full justify-self-end text-center text-neutral-600 my-10">&copy; 2022 Mattis, Max, Nils, Rishab</div>
+        <script>
+            hljs.configure({
+                languages: ["python"],
+            });
+
+            code = document.getElementById("code");
+            hljs.highlightElement(code, { language: "python" }); // Syntax-Highlighting für Code
+
+            let btn = document.querySelectorAll(".submit");
+            let out = document.getElementById("out");
+
+            function isNumeric(value) {
+                return /^-?\d+$/.test(value);
+                console.log(value);
+            }
+
+            // alle input-felder in JS Object
+
+            btn.forEach((elem, i) => {
+                elem.addEventListener("click", (e) => {
+                    let values = {};
+                    let ok_flag = true;
+                    document.querySelectorAll("input").forEach((e, i) => {
+                        if (e.value == "") {
+                            e.classList.add("wrong");
+                            ok_flag = false;
+                        }
+                        if (e.getAttribute("type") == "number" && !isNumeric(e.value)) {
+                            e.classList.add("wrong");
+                            ok_flag = false;
+                        }
+                        if (e.getAttribute("type") == "number" && parseInt(e.value) < e.getAttribute("min")) {
+                            e.classList.add("wrong");
+                            ok_flag = false;
+                        }
+                        values[e.id] = e.value;
+                    });
+                    console.log(values);
+                    if (ok_flag == true) {
+                        // Anfrage an Backend mit async
+                        fetch(elem.id, { method: "POST", headers: { Data: JSON.stringify(values) } }).then(function (response) {
+                            return response.text().then(function (text) {
+                                // Output Text wird zu Text der Antwort geändert
+                                out.innerHTML = text;
+                            });
+                        });
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>

@@ -1,0 +1,97 @@
+
+class Rotor:
+    def __init__(self, name, start, rotoratright=None):
+        if name == 1: # Typ-I-Rotor
+            self.d_wiring = dict(zip(string.ascii_lowercase, "ekmflgdqvzntowyhxuspaibrcj")) # Abbildung interner Verbindungen
+            self.r_wiring = dict(zip("ekmflgdqvzntowyhxuspaibrcj", string.ascii_lowercase)) # umgekehrt abgebildet
+            self.turnover = "q" # von q bis r
+        elif name == 2: # Typ-II-Rotor
+            self.d_wiring = dict(zip(string.ascii_lowercase, "ajdksiruxblhwtmcqgznpyfvoe"))
+            self.r_wiring = dict(zip("ajdksiruxblhwtmcqgznpyfvoe", string.ascii_lowercase))
+            self.turnover = "e" # von e bis f
+        elif name == 3: # Rotor vom Typ III
+            self.d_wiring = dict(zip(string.ascii_lowercase, "bdfhjlcprtxvznyeiwgakmusqo"))
+            self.r_wiring = dict(zip("bdfhjlcprtxvznyeiwgakmusqo", string.ascii_lowercase))
+            self.turnover = "v" # von v bis w
+        
+        self.type = name
+        self.position = start
+        self.rotated = False
+        self.rightrotor = rotoratright # der Rotor dreht sich nach rechts, wenn er keine hat
+
+
+    def __str__(self):
+        return "Rotor type {}, pos = {}".format(self.type, self.position)
+            
+
+    def rotate(self):
+        if(self.rightrotor != None and self.position == self.turnover): #!!
+            
+
+            self.position = chr((ord(self.position)-ord("a")+1)%len(string.ascii_lowercase) + ord("a"))
+            self.rotated = True
+            
+            return
+        else:
+            self.rotated = False
+            
+        if(self.rightrotor == None):
+            # Wenn sich rechts kein Rotor befindet, dreht er sich jedes Mal, wenn ein Buchstabe verschlüsselt wird
+
+            self.position = chr((ord(self.position)-ord("a")+1)%len(string.ascii_lowercase) + ord("a"))
+            self.rotated = True
+            
+        elif(self.rightrotor.position == chr(ord(self.rightrotor.turnover)+1) and self.rightrotor.rotated):
+            # Wenn es einen Rotor auf der rechten Seite gibt, dreht sich dieser Rotor, 
+            # wenn der Rotor auf der rechten Seite eine Drehung macht (wenn seine Position gleich seinem Drehwert ist).
+            # macht eine Drehung (wenn seine Position gleich seinem 'turnover' ist).
+
+            self.position = chr((ord(self.position)-ord("a")+1)%len(string.ascii_lowercase) + ord("a"))
+            self.rotated = True
+            
+        else:
+            self.rotated = False
+            
+
+    def d_encrypt(self, char): # direkte Verschlüsselung, von rechts nach links
+        self.rotate()
+        char = chr((ord(char)-ord("a")+ord(self.position)-ord("a"))%len(string.ascii_lowercase) + ord("a"))
+        char = self.d_wiring.get(char)
+        char = chr((ord(char)-ord("a")-ord(self.position)+ord("a"))%len(string.ascii_lowercase) + ord("a"))
+        return char
+
+    def r_encrypt(self, char): # umgekehrte Verschlüsselung, denn wenn sie bereits den Spiegel passiert hat
+        char = chr((ord(char)-ord("a")+ord(self.position)-ord("a"))%len(string.ascii_lowercase) + ord("a"))
+        char = self.r_wiring.get(char)
+        char = chr((ord(char)-ord("a")-ord(self.position)+ord("a"))%len(string.ascii_lowercase) + ord("a"))
+        return char        
+
+
+class Enigma:
+# Dieses Enigma HAT KEIN 'Plugboard' das würde den Rahmen sprengen
+# Wir müssen auch Methoden hinzufügen, um die Maschine zurückzusetzen oder zu setzen
+# in der gewünschten Konfiguration...
+    def __init__(self):
+        self.r1 = Rotor(1, "a", None)
+        self.r2 = Rotor(2, "a", self.r1)
+        self.r3 = Rotor(3, "a", self.r2)
+        self.reflector = dict(zip(string.ascii_lowercase, "yruhqsldpxngokmiebfzcwvjat"))
+    def encrypt(self, s):
+        out = []
+        for c in s.lower():   #alle Buchstaben auf eine "Größe"
+            if c not in string.ascii_lowercase:
+                out.append(c)
+                continue
+            c = self.r1.d_encrypt(c)
+            c = self.r2.d_encrypt(c)
+            c = self.r3.d_encrypt(c)
+
+            c = self.reflector.get(c)
+
+            c = self.r3.r_encrypt(c)
+            c = self.r2.r_encrypt(c)
+            c = self.r1.r_encrypt(c)
+
+            out.append(c)
+            
+        return "".join(out)

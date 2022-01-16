@@ -1,0 +1,39 @@
+alphabet = "abcdefghijklmnopqrstuvwxyz"
+
+letter_to_index = dict(zip(alphabet, range(len(alphabet))))
+index_to_letter = dict(zip(range(len(alphabet)), alphabet))
+
+
+def Verschlüsselung(Nachicht, Schlüssel):
+    verschlüsselt = ""
+    Nachicht = Nachicht.lower()#die Nachicht muss klein geschrieben werden damit der code funktioniert
+    Schlüssel = Schlüssel.lower()#auch der Schlüssel muss klein sein
+    split_message = [
+        Nachicht[x : x + len(Schlüssel)] for x in range(0, len(Nachicht), len(Schlüssel))
+    ] # Aufteilen der Nachicht auf die Länge des Schlüssels
+
+    for each_split in split_message:
+        x = 0
+        for letter in each_split:
+            number = (letter_to_index[letter] + letter_to_index[Schlüssel[x]]) % len(alphabet)#Die Nachicht zu ihrer zugeteilten Nummer umwandeln und die Nummer des dem ensprechendem code hinzufügen
+            verschlüsselt += index_to_letter[number]# Die Nummer wieder in einen Buchstaben umwandeln
+            x += 1
+
+    return verschlüsselt
+
+
+def Entschlüsselung(Chiffre, Schlüssel):
+    entschlüsselt = ""
+    Schlüssel = Schlüssel.lower()
+    split_encrypted = [
+        Chiffre[x : x + len(Schlüssel)] for x in range(0, len(Chiffre), len(Schlüssel))
+    ]
+
+    for each_split in split_encrypted:
+        x = 0
+        for letter in each_split:
+            number = (letter_to_index[letter] - letter_to_index[Schlüssel[x]]) % len(alphabet)
+            entschlüsselt += index_to_letter[number]
+            x += 1
+          # Entschlüsselung funkrioniert ähnlich wie Verschlüsselung nur das hier der key von dem Angegegben Buschstaben subtrahiert wird anstatt addiert
+    return entschlüsselt
